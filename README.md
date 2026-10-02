@@ -1,91 +1,130 @@
 # Freelancer Pricing Intelligence System
 
-An end-to-end machine learning system that predicts reasonable Fiverr package prices for Basic, Standard, and Premium services based on gig and seller characteristics.
+An end-to-end machine learning project that predicts Fiverr gig prices for Basic, Standard, and Premium packages based on gig and seller characteristics.
 
 ## Project Overview
 
-This project uses 8K+ Fiverr gig records to build separate regression models for predicting package-level prices.
+Freelancer Pricing Intelligence System uses machine learning to estimate reasonable package-level prices for Fiverr gigs.
 
-The system processes text, categorical, and numerical features such as gig titles, package features, seller level, ratings, delivery time, revisions, and category. The trained models are deployed through a Streamlit web application for real-time price prediction.
+The project covers the complete ML workflow:
 
-## Features
+- Data cleaning and preprocessing
+- Feature engineering
+- Exploratory data analysis
+- Outlier/price filtering
+- Multiple regression models
+- 5-fold cross-validation
+- Model evaluation
+- Random Forest model selection
+- Flask web deployment
 
-- Predicts Basic, Standard, and Premium package prices
-- TF-IDF based text feature extraction
-- One-Hot Encoding for categorical features
-- Median imputation for missing numerical values
-- Feature scaling for numerical features
-- Comparison of multiple regression algorithms
-- Real-time predictions through Streamlit
+## Dataset
 
-## Tech Stack
+The project uses a Fiverr gig dataset containing 8K+ gig records and package-level information.
 
-- Python
-- Pandas
-- NumPy
-- Scikit-learn
-- TF-IDF
-- Streamlit
-- MySQL
-- Git & GitHub
-
-## Machine Learning Approach
-
-### Input Features
+Key information includes:
 
 - Gig title
-- Seller level
 - Rating score
 - Rating count
+- Seller level
 - Category
-- Package delivery time
-- Package revisions
-- Unlimited revision indicator
+- Delivery time
+- Revisions
+- Package prices
 - Package features
 
-### Models Evaluated
+The original dataset contained 14 columns.
 
-- Linear Regression
-- Ridge Regression
-- Lasso Regression
-- Elastic Net
+## Feature Engineering
 
-Lasso Regression produced the lowest test MAE among the evaluated models for all three pricing tiers.
+Separate datasets were created for:
 
-## Model Results
+- Basic package
+- Standard package
+- Premium package
 
-| Package | Lasso Test MAE |
-|---------|----------------:|
-| Basic | 212.86 |
-| Standard | 514.47 |
-| Premium | 1,045.72 |
+Each model uses 6 numerical features:
 
-MAE (Mean Absolute Error) represents the average absolute difference between the actual and predicted package price.
+- Rating score
+- Rating count
+- Seller level
+- Package delivery days
+- Package revision count
+- Unlimited revision indicator
+
+Missing numerical revision values are handled using median imputation, followed by feature scaling.
+
+## Models
+
+Five regression algorithms were benchmarked:
+
+1. Linear Regression
+2. Ridge Regression
+3. Lasso Regression
+4. Elastic Net
+5. Random Forest
+
+Models were evaluated using:
+
+- MAE
+- RMSE
+- R²
+- 5-fold cross-validation MAE
+
+Random Forest was selected for the final deployment based on its performance across the package-level prediction tasks.
+
+## Final Model Performance
+
+| Package | Test MAE | CV MAE | R² |
+|---|---:|---:|---:|
+| Basic | 45.23 | 45.66 | 0.135 |
+| Standard | 106.91 | 104.10 | 0.206 |
+| Premium | 181.83 | 181.11 | 0.202 |
+
+## Flask Application
+
+The project includes a Flask web application where users can enter gig and package characteristics and receive real-time price predictions for all three pricing tiers.
+
+The interface collects:
+
+- Gig title
+- Category
+- Package features
+- Rating
+- Rating count
+- Seller level
+- Delivery days
+- Revisions
+- Unlimited revision options
+
+The current deployed models use the numerical features listed above; text fields such as gig title, category, and package features are collected for the application interface but are not used by the final prediction pipeline.
 
 ## Project Structure
 
 ```text
-freelancer-pricing-intelligence/
-│
-├── app/
-│   └── app.py
-│
+Freelancer Project/
 ├── data/
 │   ├── gigs_data.csv
-│   └── cleaned_gigs.csv
-│
-├── models/
-│   ├── lasso_basic.pkl
-│   ├── lasso_standard.pkl
-│   ├── lasso_premium.pkl
-│   ├── preprocessor_basic.pkl
-│   ├── preprocessor_standard.pkl
-│   └── preprocessor_premium.pkl
+│   ├── cleaned_gigs.csv
+│   ├── cleaned_gigs_basic.csv
+│   ├── cleaned_gigs_standard.csv
+│   └── cleaned_gigs_premium.csv
 │
 ├── notebooks/
 │   ├── 01_data_understanding.ipynb
 │   └── 02_featureEngineering.ipynb
 │
-├── .gitignore
-├── requirements.txt
-└── README.md
+├── models/
+│   ├── best_basic_model.pkl
+│   ├── best_standard_model.pkl
+│   └── best_premium_model.pkl
+│
+├── app/
+│   ├── app.py
+│   ├── static/
+│   │   └── style.css
+│   └── templates/
+│       └── index.html
+│
+└── requirements.txt
