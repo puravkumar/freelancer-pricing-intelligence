@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Freelancer Pricing Predictor</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: #f3f4f6;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .header p {
+            color: #9ca3af;
+            margin-top: 8px;
+        }
+
+        .box {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .box h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        label {
+            display: block;
+            color: #d1d5db;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #4b5563;
+            border-radius: 7px;
+            background: #111827;
+            color: white;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 85px;
+            resize: vertical;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .note {
+            color: #9ca3af;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .package-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .package {
+            background: #172033;
+            border: 1px solid #374151;
+            border-radius: 9px;
+            padding: 16px;
+        }
+
+        .package h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        .package label {
+            margin-top: 12px;
+        }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 12px;
+        }
+
+        .check input {
+            width: auto;
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 13px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .result {
+            background: #172033;
+            border: 1px solid #374151;
+            border-radius: 9px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .result h3 {
+            margin: 0 0 10px;
+        }
+
+        .price {
+            font-size: 27px;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+
+        .error {
+            background: #451a1a;
+            border: 1px solid #7f1d1d;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 700px) {
+            .grid,
+            .package-grid,
+            .results {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                width: 94%;
+                margin: 25px auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>Freelancer Pricing Predictor</h1>
+        <p>Estimate Basic, Standard and Premium package prices</p>
+    </div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+
+        <div class="box">
+            <h2>Gig Information</h2>
+
+            <div class="grid">
+                <div>
+                    <label>Gig Title</label>
+                    <input type="text" name="gig_title"
+                           value="{{ form_data.get('gig_title', '') }}"
+                           placeholder="e.g. I will design a professional logo">
+                </div>
+
+                <div>
+                    <label>Category</label>
+                    <input type="text" name="category"
+                           value="{{ form_data.get('category', '') }}"
+                           placeholder="e.g. Logo Design">
+                </div>
+            </div>
+
+            <div class="note">
+                These fields are collected for the interface only.
+                They are not used by the prediction model.
+            </div>
+        </div>
+
+        <div class="box">
+            <h2>Seller Information</h2>
+
+            <div class="grid">
+                <div>
+                    <label>Rating</label>
+                    <input type="number" name="rating_score" min="0" max="5" step="0.1"
+                           value="{{ form_data.get('rating_score', '5') }}" required>
+                </div>
+
+                <div>
+                    <label>Rating Count</label>
+                    <input type="number" name="rating_counts" min="0"
+                           value="{{ form_data.get('rating_counts', '0') }}" required>
+                </div>
+
+                <div>
+                    <label>Seller Level</label>
+                    <select name="seller_level" required>
+                        <option value="0" {% if form_data.get('seller_level') == '0' %}selected{% endif %}>New Seller</option>
+                        <option value="1" {% if form_data.get('seller_level') == '1' %}selected{% endif %}>Level 1 Seller</option>
+                        <option value="2" {% if form_data.get('seller_level') == '2' %}selected{% endif %}>Level 2 Seller</option>
+                        <option value="3" {% if form_data.get('seller_level') == '3' %}selected{% endif %}>Top Rated Seller</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="box">
+            <h2>Package Information</h2>
+
+            <div class="package-grid">
+
+                <div class="package">
+                    <h3>Basic</h3>
+
+                    <label>Features</label>
+                    <textarea name="basic_features"
+                              placeholder="Basic package features">{{ form_data.get('basic_features', '') }}</textarea>
+
+                    <label>Delivery Days</label>
+                    <input type="number" name="basic_delivery_days" min="0"
+                           value="{{ form_data.get('basic_delivery_days', '3') }}" required>
+
+                    <label>Revisions</label>
+                    <input type="number" name="basic_revision" min="0"
+                           value="{{ form_data.get('basic_revision', '0') }}" required>
+
+                    <label class="check">
+                        <input type="checkbox" name="basic_unlimited" value="1"
+                               {% if form_data.get('basic_unlimited') == '1' %}checked{% endif %}>
+                        Unlimited
+                    </label>
+                </div>
+
+                <div class="package">
+                    <h3>Standard</h3>
+
+                    <label>Features</label>
+                    <textarea name="standard_features"
+                              placeholder="Standard package features">{{ form_data.get('standard_features', '') }}</textarea>
+
+                    <label>Delivery Days</label>
+                    <input type="number" name="standard_delivery_days" min="0"
+                           value="{{ form_data.get('standard_delivery_days', '5') }}" required>
+
+                    <label>Revisions</label>
+                    <input type="number" name="standard_revision" min="0"
+                           value="{{ form_data.get('standard_revision', '0') }}" required>
+
+                    <label class="check">
+                        <input type="checkbox" name="standard_unlimited" value="1"
+                               {% if form_data.get('standard_unlimited') == '1' %}checked{% endif %}>
+                        Unlimited
+                    </label>
+                </div>
+
+                <div class="package">
+                    <h3>Premium</h3>
+
+                    <label>Features</label>
+                    <textarea name="premium_features"
+                              placeholder="Premium package features">{{ form_data.get('premium_features', '') }}</textarea>
+
+                    <label>Delivery Days</label>
+                    <input type="number" name="premium_delivery_days" min="0"
+                           value="{{ form_data.get('premium_delivery_days', '7') }}" required>
+
+                    <label>Revisions</label>
+                    <input type="number" name="premium_revision" min="0"
+                           value="{{ form_data.get('premium_revision', '0') }}" required>
+
+                    <label class="check">
+                        <input type="checkbox" name="premium_unlimited" value="1"
+                               {% if form_data.get('premium_unlimited') == '1' %}checked{% endif %}>
+                        Unlimited
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="note">
+                Package features are collected for display/input purposes only.
+                The model does not use them for prediction.
+            </div>
+        </div>
+
+        <button type="submit">Predict Prices</button>
+    </form>
+
+    {% if predictions %}
+    <div class="box">
+        <h2>Predicted Prices</h2>
+
+        <div class="results">
+            <div class="result">
+                <h3>Basic</h3>
+                <div class="price">${{ predictions.basic }}</div>
+            </div>
+
+            <div class="result">
+                <h3>Standard</h3>
+                <div class="price">${{ predictions.standard }}</div>
+            </div>
+
+            <div class="result">
+                <h3>Premium</h3>
+                <div class="price">${{ predictions.premium }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+</body>
+</html>
